@@ -1,18 +1,8 @@
 import {NextFunction, Request, Response} from "express"
-export const getEmployees =(req:Request,res:Response) =>
+import { Employee } from "../models/employee.model";
+export const getEmployees =async(req:Request,res:Response) =>
 {
-    const employees = [
-        { id: 1, name: "A" },
-        { id: 2, name: "B" },
-        { id: 3, name: "C" },
-        { id: 4, name: "D" },
-        { id: 5, name: "E" },
-        { id: 6, name: "F" },
-        { id: 7, name: "G" },
-        { id: 8, name: "H" },
-        { id: 9, name: "I" },
-        { id: 10, name: "J" }
-        ];
+    const employees = await Employee.findAll();
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 10
     const offset = (page -1) *limit
@@ -24,17 +14,18 @@ export const getEmployees =(req:Request,res:Response) =>
     })
 }
 
-export const createEmployee = (req:Request,res:Response,next:NextFunction) =>
+export const createEmployee = async(req:Request,res:Response,next:NextFunction) =>
 {
     try
     {
          console.log("Create Employee method ")
-         throw new Error("Database connection failed");
-    res.send({
-        "name":"Dhivya",
-        "age":12
-    })
+         const emp =await  Employee.create({
+            name:req.body.name,
+            age:req.body.age,
+            department:req.body.department
 
+         })
+         res.status(201).send(emp)
     }
     catch(error)
     {
@@ -42,4 +33,60 @@ export const createEmployee = (req:Request,res:Response,next:NextFunction) =>
     }
    
 
+}
+
+export const getEmployeeById = async(req:Request,res:Response,next:NextFunction) =>
+{
+    try {
+        const empId = Number(req.params.id)
+        const empData = await Employee.findByPk(empId)
+
+        if(!empData)
+        {
+            return res.status(401).send({
+                "message":"invalid emp info"
+            })
+        }
+
+        res.status(201).send(empData)
+
+    }
+    catch(error)
+    {
+        next(error)
+    }
+}
+
+
+export const updateEmployee = async(req:Request,res:Response,next:NextFunction) =>
+{
+    try {
+    const updateEmp = Employee.update(req.body,{ where :{
+        "id":req.body.id
+    }})
+
+
+    res.status(200).send(updateEmp)
+    } catch(error)
+    {
+        next(error)
+    }
+}
+
+
+export const deleteEmployee = async(req:Request,res:Response,next:NextFunction) =>{
+    try 
+    {
+        const emp = Employee.destroy({
+            where :{
+                "id":req.params?.id
+            }
+        })
+        res.status(200).send(emp)
+
+    }
+    catch(error)
+    {
+        next(error)
+    }
 }
